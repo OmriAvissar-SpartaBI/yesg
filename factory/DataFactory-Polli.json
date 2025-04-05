@@ -1,0 +1,9 @@
+{
+	"name": "DataFactory-Polli",
+	"properties": {
+		"globalConfigurations": {
+			"PipelineBillingEnabled": "true"
+		}
+	},
+	"location": "westeurope"
+}
