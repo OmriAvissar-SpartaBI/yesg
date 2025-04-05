@@ -1,0 +1,63 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "DataFactory-Polli"
+		},
+		"AzureBlobStorage1_connectionString": {
+			"value": ""
+		},
+		"AzureBlobStorage2_connectionString": {
+			"value": ""
+		},
+		"AzureDataLakeStorage3_accountKey": {
+			"value": ""
+		},
+		"AzureDataExplorer1_properties_typeProperties_endpoint": {
+			"value": "https://edencluster.westeurope.kusto.windows.net"
+		},
+		"AzureDataExplorer1_properties_typeProperties_database": {
+			"value": "EdenBase"
+		},
+		"AzureDataLakeStorage3_properties_typeProperties_url": {
+			"value": "https://saspartabiomri.dfs.core.windows.net/"
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"value": "https://key-Farid.vault.azure.net/"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_server": {
+			"value": "sqlshowcasespartaprod.database.windows.net"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_database": {
+			"value": "Contoso_Temp"
+		},
+		"AzureSqlDatabase2_properties_typeProperties_server": {
+			"value": "sqlshowcasespartaprod.database.windows.net"
+		},
+		"AzureSqlDatabase2_properties_typeProperties_database": {
+			"value": "Contoso"
+		},
+		"Data_properties_typeProperties_host": {
+			"value": "C:\\Users\\omria\\Desktop\\Farid\\"
+		},
+		"Data_properties_typeProperties_userId": {
+			"value": "OmriComputer\\Omri Avissar"
+		},
+		"farid_properties_typeProperties_serviceEndpoint": {
+			"value": "https://faridtherabbit.blob.core.windows.net/"
+		},
+		"showcase_properties_typeProperties_server": {
+			"value": "sqlservershowcasespartaprod.database.windows.net"
+		},
+		"showcase_properties_typeProperties_database": {
+			"value": "Contoso"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}

@@ -1,0 +1,2708 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "DataFactory-Polli"
+		},
+		"AzureBlobStorage1_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorage1'"
+		},
+		"AzureBlobStorage2_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'AzureBlobStorage2'"
+		},
+		"AzureDataLakeStorage3_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'AzureDataLakeStorage3'"
+		},
+		"AzureDataExplorer1_properties_typeProperties_endpoint": {
+			"type": "string",
+			"defaultValue": "https://edencluster.westeurope.kusto.windows.net"
+		},
+		"AzureDataExplorer1_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "EdenBase"
+		},
+		"AzureDataLakeStorage3_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://saspartabiomri.dfs.core.windows.net/"
+		},
+		"AzureKeyVault1_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://key-Farid.vault.azure.net/"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sqlshowcasespartaprod.database.windows.net"
+		},
+		"AzureSqlDatabase1_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "Contoso_Temp"
+		},
+		"AzureSqlDatabase2_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sqlshowcasespartaprod.database.windows.net"
+		},
+		"AzureSqlDatabase2_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "Contoso"
+		},
+		"Data_properties_typeProperties_host": {
+			"type": "string",
+			"defaultValue": "C:\\Users\\omria\\Desktop\\Farid\\"
+		},
+		"Data_properties_typeProperties_userId": {
+			"type": "string",
+			"defaultValue": "OmriComputer\\Omri Avissar"
+		},
+		"farid_properties_typeProperties_serviceEndpoint": {
+			"type": "string",
+			"defaultValue": "https://faridtherabbit.blob.core.windows.net/"
+		},
+		"showcase_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "sqlservershowcasespartaprod.database.windows.net"
+		},
+		"showcase_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "Contoso"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/ADF Pipeline Run Synced Example')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute ADF Pipeline",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Execute ADF Pipeline",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"AdfSubscriptionId": "fc8e1aad-9949-42ee-93fd-8e79d12716e5",
+								"AdfResourceGroupName": "RG-DataFactory-Test",
+								"PipelineRunStatusPollingIntervalInSeconds": 10,
+								"PipelineParametersObject": "{\"FailureFlag\":false,\"NumOfSeconds\":10}",
+								"AdfResourceName": "DataFactory-Farid",
+								"AdfPipelineName": "pipeline1"
+							}
+						}
+					},
+					{
+						"name": "ReturnValueString",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Execute ADF Pipeline",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "ReturnValueString",
+							"value": {
+								"value": "@if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'ReturnValueObject'),string(activity('Execute ADF Pipeline').output.pipelineReturnValue.ReturnValueObject),null)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "PipelineRunId",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Execute ADF Pipeline",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "PipelineRunId",
+							"value": {
+								"value": "@if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'PipelineRunId'),activity('Execute ADF Pipeline').output.pipelineReturnValue.PipelineRunId,null)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "PipelineRunFailedString",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Execute ADF Pipeline",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "PipelineRunFailedString",
+							"value": {
+								"value": "@if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'PipelineRunFailedString'),activity('Execute ADF Pipeline').output.pipelineReturnValue.PipelineRunFailedString,null)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"ReturnValueString": {
+						"type": "String"
+					},
+					"PipelineRunId": {
+						"type": "String"
+					},
+					"PipelineRunFailedString": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "Execute ADF Pipeline"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-05-21T07:39:43Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/Execute ADF Pipeline')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ADF Pipelines Runs Asynced Example')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get Pipelines Details to run",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:05:00",
+							"retry": 2,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "AzureSqlDatabase1",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "select *\nfrom\n(\nVALUES\n(\n 'a'\n,'fc8e1aad-9949-42ee-93fd-8e79d12716e5'\n,'RG-DataFactory-Test'\n,'{\"FailureFlag\":true,\"NumOfSeconds\":10}'\n,'DataFactory-Farid'\n,'pipeline11'\n),\n(\n 'b'\n,'fc8e1aad-9949-42ee-93fd-8e79d12716e5'\n,'RG-DataFactory-Test'\n,null\n,'DataFactory-Farid'\n,'pipeline2'\n)\n)\nas AdfPipelinesToRun\n(\n [PipelineWithParametersKey]\n,[AdfSubscriptionId]\n,[AdfResourceGroupName]\n,[PipelineParametersObject]\n,[AdfResourceName]\n,[AdfPipelineName]\n)"
+								}
+							],
+							"scriptBlockExecutionTimeout": "02:00:00"
+						}
+					},
+					{
+						"name": "Execute each Pipeline",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get Pipelines Details to run",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@if(equals(activity('Get Pipelines Details to run').output.resultSetCount,0),variables('EmptyArray'),activity('Get Pipelines Details to run').output.resultSets[0].rows)",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"activities": [
+								{
+									"name": "Execute ADF Pipeline",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Execute ADF Pipeline",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"AdfSubscriptionId": {
+												"value": "@item().AdfSubscriptionId",
+												"type": "Expression"
+											},
+											"AdfResourceGroupName": {
+												"value": "@item().AdfResourceGroupName",
+												"type": "Expression"
+											},
+											"PipelineRunStatusPollingIntervalInSeconds": 10,
+											"PipelineParametersObject": {
+												"value": "@json(coalesce(item().PipelineParametersObject,''))",
+												"type": "Expression"
+											},
+											"AdfResourceName": {
+												"value": "@item().AdfResourceName",
+												"type": "Expression"
+											},
+											"AdfPipelineName": {
+												"value": "@item().AdfPipelineName",
+												"type": "Expression"
+											},
+											"WaitForCompletionFlag": false
+										}
+									}
+								},
+								{
+									"name": "PipelineRunExecutionLog",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Execute ADF Pipeline",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "PipelineRunExecutionLog",
+										"value": {
+											"value": "@concat('PipelineWithParametersKey: ',string(item().PipelineWithParametersKey),'; PipelineRunId: ',if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'PipelineRunId'),activity('Execute ADF Pipeline').output.pipelineReturnValue.PipelineRunId,''))",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"PipelineRunExecutionLog": {
+						"type": "String"
+					},
+					"EmptyArray": {
+						"type": "Array",
+						"defaultValue": []
+					}
+				},
+				"folder": {
+					"name": "Execute ADF Pipeline"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-05-21T07:39:43Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]",
+				"[concat(variables('factoryId'), '/pipelines/Execute ADF Pipeline')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Databricks Workflow Example')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Execute Databricks Job",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "Execute Databricks Job",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"DatabricksNotebookParametersObject": "{\"notebookInput_1\":\"bbbbb\"}",
+								"DatabricksSqlParametersObject": "{\"tableName\":\"dim2\"}"
+							}
+						}
+					},
+					{
+						"name": "JobRunGuiUrl",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Execute Databricks Job",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "JobRunGuiUrl",
+							"value": {
+								"value": "@if(contains(activity('Execute Databricks Job').output.pipelineReturnValue,'JobRunGuiUrl'),activity('Execute Databricks Job').output.pipelineReturnValue.JobRunGuiUrl,null)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"variables": {
+					"JobRunGuiUrl": {
+						"type": "String"
+					}
+				},
+				"folder": {
+					"name": "Execute Databricks Job"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-05-20T12:22:18Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/Execute Databricks Job')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Execute ADF Pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Trigger ADF Pipeline Run",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "AdfRestApiOrigin",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:00:30",
+							"retry": 2,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"disableCertValidation": false,
+							"turnOffAsync": true,
+							"url": {
+								"value": "@concat(variables('AdfRestApiOrigin'),'pipelines/',pipeline().parameters.AdfPipelineName,'/createRun',variables('AdfRespApiFixedQueryParameters'))",
+								"type": "Expression"
+							},
+							"body": {
+								"value": "@string(pipeline().parameters.PipelineParametersObject)",
+								"type": "Expression"
+							},
+							"authentication": {
+								"type": "MSI",
+								"resource": {
+									"value": "@variables('ArmResourceId')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "AdfRestApiOrigin",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "AdfRestApiOrigin",
+							"value": {
+								"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.AdfSubscriptionId,'/resourceGroups/',pipeline().parameters.AdfResourceGroupName,'/providers/Microsoft.DataFactory/factories/',pipeline().parameters.AdfResourceName,'/')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "If should wait for ADF Pipeline run completion",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Trigger ADF Pipeline Run",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@pipeline().parameters.WaitForCompletionFlag",
+								"type": "Expression"
+							},
+							"ifFalseActivities": [
+								{
+									"name": "Pipeline Return Value without wait",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "pipelineReturnValue",
+										"value": [
+											{
+												"key": "ReturnValueObject",
+												"value": {
+													"type": "Null"
+												}
+											},
+											{
+												"key": "PipelineRunId",
+												"value": {
+													"type": "Expression",
+													"content": "@activity('Trigger ADF Pipeline Run').output.runId"
+												}
+											},
+											{
+												"key": "PipelineRunFailedString",
+												"value": {
+													"type": "Null"
+												}
+											}
+										],
+										"setSystemVariable": true
+									}
+								}
+							],
+							"ifTrueActivities": [
+								{
+									"name": "Wait for ADF Pipeline Run Completion",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Wait for ADF Pipeline Run Completion",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"PipelineRunStatusPollingIntervalInSeconds": {
+												"value": "@pipeline().parameters.PipelineRunStatusPollingIntervalInSeconds",
+												"type": "Expression"
+											},
+											"ArmResourceId": {
+												"value": "@variables('ArmResourceId')",
+												"type": "Expression"
+											},
+											"AdfRespApiFixedQueryParameters": {
+												"value": "@variables('AdfRespApiFixedQueryParameters')",
+												"type": "Expression"
+											},
+											"PipelineRunId": {
+												"value": "@activity('Trigger ADF Pipeline Run').output.runId",
+												"type": "Expression"
+											},
+											"AdfRestApiOrigin": {
+												"value": "@variables('AdfRestApiOrigin')",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "Pipeline Return Value with wait",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Wait for ADF Pipeline Run Completion",
+											"dependencyConditions": [
+												"Completed"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "pipelineReturnValue",
+										"value": [
+											{
+												"key": "ReturnValueObject",
+												"value": {
+													"type": "Expression",
+													"content": "@if(contains(activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue,'ReturnValueObject'),activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue.ReturnValueObject,null)"
+												}
+											},
+											{
+												"key": "PipelineRunId",
+												"value": {
+													"type": "Expression",
+													"content": "@activity('Trigger ADF Pipeline Run').output.runId"
+												}
+											},
+											{
+												"key": "PipelineRunFailedString",
+												"value": {
+													"type": "Expression",
+													"content": "@if(contains(activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue,'PipelineRunFailedString'),activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue.PipelineRunFailedString,null)"
+												}
+											}
+										],
+										"setSystemVariable": true
+									}
+								},
+								{
+									"name": "Propagate error",
+									"type": "Fail",
+									"dependsOn": [
+										{
+											"activity": "Wait for ADF Pipeline Run Completion",
+											"dependencyConditions": [
+												"Failed"
+											]
+										}
+									],
+									"userProperties": [],
+									"typeProperties": {
+										"message": {
+											"value": "@if(equals(activity('Wait for ADF Pipeline Run Completion').Error.message,''),'No Error Message',activity('Wait for ADF Pipeline Run Completion').Error.message)",
+											"type": "Expression"
+										},
+										"errorCode": "0"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"AdfSubscriptionId": {
+						"type": "string"
+					},
+					"AdfResourceGroupName": {
+						"type": "string"
+					},
+					"PipelineRunStatusPollingIntervalInSeconds": {
+						"type": "int",
+						"defaultValue": 30
+					},
+					"PipelineParametersObject": {
+						"type": "object"
+					},
+					"AdfResourceName": {
+						"type": "string"
+					},
+					"AdfPipelineName": {
+						"type": "string"
+					},
+					"WaitForCompletionFlag": {
+						"type": "bool",
+						"defaultValue": true
+					}
+				},
+				"variables": {
+					"AdfRestApiOrigin": {
+						"type": "String"
+					},
+					"PipelineRunId": {
+						"type": "String"
+					},
+					"ArmResourceId": {
+						"type": "String",
+						"defaultValue": "https://management.core.windows.net"
+					},
+					"AdfRespApiFixedQueryParameters": {
+						"type": "String",
+						"defaultValue": "?api-version=2018-06-01"
+					}
+				},
+				"folder": {
+					"name": "Execute ADF Pipeline"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-05-21T07:43:51Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/Wait for ADF Pipeline Run Completion')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Execute Databricks Job')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Trigger Databricks Job Run",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "DatabricksRestApiOrigin",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:00:30",
+							"retry": 2,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"disableCertValidation": false,
+							"turnOffAsync": true,
+							"url": {
+								"value": "@concat(variables('DatabricksRestApiOrigin'),'run-now')",
+								"type": "Expression"
+							},
+							"body": {
+								"value": "@concat('{\"job_id\":',pipeline().parameters.JobId,',\"notebook_params\":',string(pipeline().parameters.DatabricksNotebookParametersObject),',\"sql_params\":',string(pipeline().parameters.DatabricksSqlParametersObject),'}')",
+								"type": "Expression"
+							},
+							"authentication": {
+								"type": "MSI",
+								"resource": {
+									"value": "@variables('AzureDatabricksResourceId')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "DatabricksRestApiOrigin",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "DatabricksSiteOrigin",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "DatabricksRestApiOrigin",
+							"value": {
+								"value": "@concat(variables('DatabricksSiteOrigin'),'api/2.1/jobs/')",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "JobRunId",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Trigger Databricks Job Run",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "JobRunId",
+							"value": {
+								"value": "@string(activity('Trigger Databricks Job Run').output.run_id)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Wait for Job Run Completion",
+						"type": "Until",
+						"dependsOn": [
+							{
+								"activity": "GetJobRunStateUrl",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@variables('JobRunCompletedFlag')",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Wait For Next Polling",
+									"type": "Wait",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": {
+											"value": "@pipeline().parameters.JobRunStatusPollingIntervalInSeconds",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Get Job Run Status",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Wait For Next Polling",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.00:00:30",
+										"retry": 2,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "GET",
+										"headers": {},
+										"disableCertValidation": false,
+										"turnOffAsync": true,
+										"url": {
+											"value": "@variables('GetJobRunStateUrl')",
+											"type": "Expression"
+										},
+										"body": {
+											"value": "@concat('{\"job_id\":',pipeline().parameters.JobId,'}')",
+											"type": "Expression"
+										},
+										"authentication": {
+											"type": "MSI",
+											"resource": {
+												"value": "@variables('AzureDatabricksResourceId')",
+												"type": "Expression"
+											}
+										}
+									}
+								},
+								{
+									"name": "Initialize JobRunCompletedFlag",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "JobRunCompletedFlag",
+										"value": {
+											"value": "@bool(1)",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "JobRunCompletedFlag",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Initialize JobRunCompletedFlag",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										},
+										{
+											"activity": "Get Job Run Status",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "JobRunCompletedFlag",
+										"value": {
+											"value": "@not(\n    or(\n        equals(activity('Get Job Run Status').output.state.life_cycle_state,'PENDING'),\n        equals(activity('Get Job Run Status').output.state.life_cycle_state,'RUNNING')\n    )\n)",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"timeout": "0.05:00:00"
+						}
+					},
+					{
+						"name": "GetJobRunStateUrl",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "JobRunId",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "GetJobRunStateUrl",
+							"value": {
+								"value": "@concat(variables('DatabricksRestApiOrigin'),'runs/get?run_id=',variables('JobRunId'))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "If Databricks job run failed",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Wait for Job Run Completion",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(and(contains(activity('Get Job Run Status').output.state,'result_state'),equals(activity('Get Job Run Status').output.state.result_state,'SUCCESS')))",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Propagate Databricks error",
+									"type": "Fail",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"message": {
+											"value": "@activity('Get Job Run Status').output.state.state_message",
+											"type": "Expression"
+										},
+										"errorCode": "0"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "JobRunGuiUrl",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "JobRunId",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "pipelineReturnValue",
+							"value": [
+								{
+									"key": "JobRunGuiUrl",
+									"value": {
+										"type": "Expression",
+										"content": "@concat(variables('DatabricksSiteOrigin'),'#job/',pipeline().parameters.JobId,'/run/',variables('JobRunId'))"
+									}
+								}
+							],
+							"setSystemVariable": true
+						}
+					},
+					{
+						"name": "DatabricksSiteOrigin",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "DatabricksSiteOrigin",
+							"value": {
+								"value": "@concat('https://',pipeline().parameters.WorkspaceId,'.azuredatabricks.net/')",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"WorkspaceId": {
+						"type": "string",
+						"defaultValue": "adb-1028115474292650.10"
+					},
+					"JobId": {
+						"type": "string",
+						"defaultValue": "105564653978371"
+					},
+					"JobRunStatusPollingIntervalInSeconds": {
+						"type": "int",
+						"defaultValue": 30
+					},
+					"DatabricksNotebookParametersObject": {
+						"type": "object"
+					},
+					"DatabricksSqlParametersObject": {
+						"type": "object"
+					}
+				},
+				"variables": {
+					"DatabricksRestApiOrigin": {
+						"type": "String"
+					},
+					"JobRunId": {
+						"type": "String"
+					},
+					"GetJobRunStateUrl": {
+						"type": "String"
+					},
+					"AzureDatabricksResourceId": {
+						"type": "String",
+						"defaultValue": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d"
+					},
+					"DatabricksSiteOrigin": {
+						"type": "String"
+					},
+					"JobRunCompletedFlag": {
+						"type": "Boolean",
+						"defaultValue": false
+					}
+				},
+				"folder": {
+					"name": "Execute Databricks Job"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-05-20T12:22:18Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Pipeline_CopyViewToTable')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy from source to target",
+						"type": "Copy",
+						"dependsOn": [
+							{
+								"activity": "Truncate target if exists",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:20:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "AzureSqlSink",
+								"writeBehavior": "insert",
+								"sqlWriterUseTableLock": true,
+								"tableOption": "autoCreate",
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "RS_ETL_Source",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": {
+										"value": "@pipeline().parameters.Source_SchemaName",
+										"type": "Expression"
+									},
+									"TableName": {
+										"value": "@pipeline().parameters.Source_ViewName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "RS_ETL_Target",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": {
+										"value": "@pipeline().parameters.Target_SchemaName",
+										"type": "Expression"
+									},
+									"TableName": {
+										"value": "@pipeline().parameters.Taget_TableName",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					},
+					{
+						"name": "Check if target exists",
+						"type": "GetMetadata",
+						"dependsOn": [
+							{
+								"activity": "Run stored procedure if requested",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:01:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataset": {
+								"referenceName": "RS_ETL_Target",
+								"type": "DatasetReference",
+								"parameters": {
+									"SchemaName": {
+										"value": "@pipeline().parameters.Target_SchemaName",
+										"type": "Expression"
+									},
+									"TableName": {
+										"value": "@pipeline().parameters.Taget_TableName",
+										"type": "Expression"
+									}
+								}
+							},
+							"fieldList": [
+								"exists"
+							]
+						}
+					},
+					{
+						"name": "Truncate target if exists",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Check if target exists",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@activity('Check if target exists').output.exists",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Truncate target",
+									"type": "Script",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:01:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabase1",
+										"type": "LinkedServiceReference"
+									},
+									"typeProperties": {
+										"scripts": [
+											{
+												"type": "NonQuery",
+												"text": {
+													"value": "@concat('truncate table [',pipeline().parameters.Target_SchemaName,'].[',pipeline().parameters.Taget_TableName,']')",
+													"type": "Expression"
+												}
+											}
+										]
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Run stored procedure if requested",
+						"type": "IfCondition",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(empty(pipeline().parameters.Optional_PreRunSp_Name))",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Run stored procedure",
+									"type": "SqlServerStoredProcedure",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:20:00",
+										"retry": 1,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"storedProcedureName": {
+											"value": "@concat('[',pipeline().parameters.Optional_PreRunSp_SchemaName,'].[',pipeline().parameters.Optional_PreRunSp_Name,']')",
+											"type": "Expression"
+										}
+									},
+									"linkedServiceName": {
+										"referenceName": "AzureSqlDatabase1",
+										"type": "LinkedServiceReference"
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"Source_SchemaName": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"Source_ViewName": {
+						"type": "string"
+					},
+					"Target_SchemaName": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"Taget_TableName": {
+						"type": "string"
+					},
+					"Optional_PreRunSp_SchemaName": {
+						"type": "string",
+						"defaultValue": "dbo"
+					},
+					"Optional_PreRunSp_Name": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-05-24T11:03:24Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/RS_ETL_Source')]",
+				"[concat(variables('factoryId'), '/datasets/RS_ETL_Target')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Pipeline_Main')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Get PowerBI View Names",
+						"type": "Script",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:01:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"linkedServiceName": {
+							"referenceName": "AzureSqlDatabase1",
+							"type": "LinkedServiceReference"
+						},
+						"typeProperties": {
+							"scripts": [
+								{
+									"type": "Query",
+									"text": "select\n [SchemaName] = schema_name(v.schema_id)\n,[ViewName] = v.name\n,[TableName] = substring(v.name,4,len(v.name)-3)\nfrom sys.views v\nwhere schema_name(v.schema_id) = 'powerbi'"
+								}
+							]
+						}
+					},
+					{
+						"name": "Copy all PowerBI Views To Tables",
+						"type": "ForEach",
+						"dependsOn": [
+							{
+								"activity": "Get PowerBI View Names",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get PowerBI View Names').output.resultSets[0].rows",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 5,
+							"activities": [
+								{
+									"name": "Execute Pipeline_CopyViewToTable",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "Pipeline_CopyViewToTable",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"Source_SchemaName": {
+												"value": "@item().SchemaName",
+												"type": "Expression"
+											},
+											"Source_ViewName": {
+												"value": "@item().ViewName",
+												"type": "Expression"
+											},
+											"Target_SchemaName": {
+												"value": "@item().SchemaName",
+												"type": "Expression"
+											},
+											"Taget_TableName": {
+												"value": "@item().TableName",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2022-05-24T11:03:25Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]",
+				"[concat(variables('factoryId'), '/pipelines/Pipeline_CopyViewToTable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Process PBI Dataset')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Process PBI Dataset",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Set PbiDatasetId",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:30:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "POST",
+							"headers": {},
+							"url": {
+								"value": "@concat('https://api.powerbi.com/v1.0/myorg/groups/',variables('PbiWorkspaceId'),'/datasets/',variables('PbiDatasetId'),'/refreshes')",
+								"type": "Expression"
+							},
+							"body": {
+								"value": "@concat('{\"notifyOption\":\"NoNotification\",\"maxParallelism\":30,\"type\":\"Full\",\"retryCount\":',pipeline().parameters.RetryCount,',\"objects\":',pipeline().parameters.ObjectToProcess,'}')",
+								"type": "Expression"
+							},
+							"authentication": {
+								"type": "MSI",
+								"resource": {
+									"value": "@variables('PbiServiceAadRerourceId')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "If PBI Dataset Process Failed",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "Process PBI Dataset",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@not(equals('Completed',activity('Process PBI Dataset').output.status))",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Fail Pipeline",
+									"type": "Fail",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"message": {
+											"value": "@string(if(contains(activity('Process PBI Dataset').output,'messages'),activity('Process PBI Dataset').output.messages,activity('Process PBI Dataset').output))",
+											"type": "Expression"
+										},
+										"errorCode": {
+											"value": "'PbiServiceRefreshFailure'",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Get PBI Workspace Details",
+						"type": "WebActivity",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.00:01:30",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"turnOffAsync": true,
+							"url": {
+								"value": "@concat('https://api.powerbi.com/v1.0/myorg/groups?$filter=',encodeUriComponent(concat('tolower(name) eq ''',toLower(pipeline().parameters.PbiWorkspaceName),'''')))",
+								"type": "Expression"
+							},
+							"body": {
+								"notifyOption": "NoNotification",
+								"maxParallelism": 30,
+								"retryCount": 2,
+								"type": "Full"
+							},
+							"authentication": {
+								"type": "MSI",
+								"resource": {
+									"value": "@variables('PbiServiceAadRerourceId')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Get All PBI Datasets Details",
+						"type": "WebActivity",
+						"dependsOn": [
+							{
+								"activity": "Set PbiWorkspaceId",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.00:01:30",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"method": "GET",
+							"headers": {},
+							"turnOffAsync": true,
+							"url": {
+								"value": "@concat('https://api.powerbi.com/v1.0/myorg/groups/',variables('PbiWorkspaceId'),'/datasets')",
+								"type": "Expression"
+							},
+							"body": {
+								"notifyOption": "NoNotification",
+								"maxParallelism": 30,
+								"retryCount": 2,
+								"type": "Full"
+							},
+							"authentication": {
+								"type": "MSI",
+								"resource": {
+									"value": "@variables('PbiServiceAadRerourceId')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					{
+						"name": "Set PbiWorkspaceId",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Get PBI Workspace Details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "PbiWorkspaceId",
+							"value": {
+								"value": "@activity('Get PBI Workspace Details').output.value[0].id",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Filter Requested PBI Dataset Details",
+						"type": "Filter",
+						"dependsOn": [
+							{
+								"activity": "Get All PBI Datasets Details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@activity('Get All PBI Datasets Details').output.value",
+								"type": "Expression"
+							},
+							"condition": {
+								"value": "@equals(toLower(item().name),toLower(pipeline().parameters.PbiDatasetName))",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set PbiDatasetId",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Filter Requested PBI Dataset Details",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "PbiDatasetId",
+							"value": {
+								"value": "@activity('Filter Requested PBI Dataset Details').output.value[0].id",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"PbiWorkspaceName": {
+						"type": "string"
+					},
+					"PbiDatasetName": {
+						"type": "string"
+					},
+					"RetryCount": {
+						"type": "string",
+						"defaultValue": "1"
+					},
+					"ObjectToProcess": {
+						"type": "string",
+						"defaultValue": []
+					}
+				},
+				"variables": {
+					"PbiWorkspaceId": {
+						"type": "String"
+					},
+					"PbiDatasetId": {
+						"type": "String"
+					},
+					"PbiServiceAadRerourceId": {
+						"type": "String",
+						"defaultValue": "https://analysis.windows.net/powerbi/api"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-03-19T08:14:39Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Wait for ADF Pipeline Run Completion')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Wait for Pipeline Run Completion",
+						"type": "Until",
+						"dependsOn": [
+							{
+								"activity": "GetPipelineRunStateUrl",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@variables('PipelineRunCompletedFlag')",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Wait For Next Polling",
+									"type": "Wait",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"waitTimeInSeconds": {
+											"value": "@pipeline().parameters.PipelineRunStatusPollingIntervalInSeconds",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Initialize PipelineRunCompletedFlag",
+									"type": "SetVariable",
+									"dependsOn": [],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "PipelineRunCompletedFlag",
+										"value": {
+											"value": "@bool(1)",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "PipelineRunCompletedFlag",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Initialize PipelineRunCompletedFlag",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										},
+										{
+											"activity": "Get Pipeline Run Status",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "PipelineRunCompletedFlag",
+										"value": {
+											"value": "@contains(createArray('Succeeded','Failed','Cancelled'),activity('Get Pipeline Run Status').output.status)",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Get Pipeline Run Status",
+									"type": "WebActivity",
+									"dependsOn": [
+										{
+											"activity": "Wait For Next Polling",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.00:00:30",
+										"retry": 2,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"method": "GET",
+										"headers": {},
+										"turnOffAsync": true,
+										"url": {
+											"value": "@variables('GetPipelineRunStateUrl')",
+											"type": "Expression"
+										},
+										"authentication": {
+											"type": "MSI",
+											"resource": {
+												"value": "@pipeline().parameters.ArmResourceId",
+												"type": "Expression"
+											}
+										}
+									}
+								}
+							],
+							"timeout": "0.05:00:00"
+						}
+					},
+					{
+						"name": "GetPipelineRunStateUrl",
+						"type": "SetVariable",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "GetPipelineRunStateUrl",
+							"value": {
+								"value": "@concat(pipeline().parameters.AdfRestApiOrigin,'pipelineruns/',pipeline().parameters.PipelineRunId,pipeline().parameters.AdfRespApiFixedQueryParameters)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "If ADF Pipeline run failed",
+						"type": "IfCondition",
+						"dependsOn": [
+							{
+								"activity": "PipelineRunFailedFlag",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"userProperties": [],
+						"typeProperties": {
+							"expression": {
+								"value": "@variables('PipelineRunFailedFlag')",
+								"type": "Expression"
+							},
+							"ifTrueActivities": [
+								{
+									"name": "Propagate error",
+									"type": "Fail",
+									"dependsOn": [],
+									"userProperties": [],
+									"typeProperties": {
+										"message": {
+											"value": "@concat('Requested Pipeline Run Status: ',activity('Get Pipeline Run Status').output.status,if(contains(activity('Get Pipeline Run Status').output,'cancelledBy'),concat('; Cancelled By: ',activity('Get Pipeline Run Status').output.cancelledBy),''),'; Error Message: ',activity('Get Pipeline Run Status').output.message)",
+											"type": "Expression"
+										},
+										"errorCode": "0"
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "PipelineRunFailedFlag",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "Wait for Pipeline Run Completion",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "PipelineRunFailedFlag",
+							"value": {
+								"value": "@contains(createArray('Failed','Cancelled'),activity('Get Pipeline Run Status').output.status)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Pipeline Return Value",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "PipelineRunFailedFlag",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "pipelineReturnValue",
+							"value": [
+								{
+									"key": "ReturnValueObject",
+									"value": {
+										"type": "Expression",
+										"content": "@activity('Get Pipeline Run Status').output.pipelineReturnValue"
+									}
+								},
+								{
+									"key": "PipelineRunFailedString",
+									"value": {
+										"type": "Expression",
+										"content": "@if(variables('PipelineRunFailedFlag'),'yes','no')"
+									}
+								}
+							],
+							"setSystemVariable": true
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"PipelineRunStatusPollingIntervalInSeconds": {
+						"type": "int"
+					},
+					"ArmResourceId": {
+						"type": "string"
+					},
+					"AdfRespApiFixedQueryParameters": {
+						"type": "string"
+					},
+					"PipelineRunId": {
+						"type": "string"
+					},
+					"AdfRestApiOrigin": {
+						"type": "string"
+					}
+				},
+				"variables": {
+					"GetPipelineRunStateUrl": {
+						"type": "String"
+					},
+					"PipelineRunCompletedFlag": {
+						"type": "Boolean",
+						"defaultValue": false
+					},
+					"PipelineRunFailedFlag": {
+						"type": "Boolean"
+					}
+				},
+				"folder": {
+					"name": "Execute ADF Pipeline"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-05-21T07:43:51Z"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/serviceBus')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "WebHook1",
+						"type": "WebHook",
+						"dependsOn": [],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"url": {
+								"value": "@concat('https://',pipeline().parameters.serviceBusNamespaceName,'.servicebus.windows.net/',pipeline().parameters.queueName,'/messages')",
+								"type": "Expression"
+							},
+							"method": "POST",
+							"headers": {
+								"Content-Type": "application/json",
+								"CustomPoperty": "aaaaa",
+								"BrokerProperties": {
+									"value": "@concat('{\"MessageId\":\"',guid(),'\",\"Label\":\"',pipeline().Pipeline,'\",\"CorrelationId\":\"',pipeline().RunId,'\"}')",
+									"type": "Expression"
+								}
+							},
+							"body": {
+								"value": "@json(concat('{\"data\":{\"failureFlag\":',pipeline().parameters.failureFlag,'}}'))",
+								"type": "Expression"
+							},
+							"timeout": "01:00:00",
+							"reportStatusOnCallBack": true,
+							"authentication": {
+								"resource": "https://servicebus.azure.net",
+								"credential": {
+									"referenceName": "credential1",
+									"type": "CredentialReference"
+								}
+							}
+						}
+					},
+					{
+						"name": "Set variable1",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "WebHook1",
+								"dependencyConditions": [
+									"Completed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "response",
+							"value": {
+								"value": "@string(activity('WebHook1').output)",
+								"type": "Expression"
+							}
+						}
+					},
+					{
+						"name": "Set variable1_copy1",
+						"type": "SetVariable",
+						"dependsOn": [
+							{
+								"activity": "WebHook1",
+								"dependencyConditions": [
+									"Failed"
+								]
+							}
+						],
+						"policy": {
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"variableName": "error",
+							"value": {
+								"value": "@string(activity('WebHook1').error)",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"serviceBusNamespaceName": {
+						"type": "string",
+						"defaultValue": "serviservi"
+					},
+					"queueName": {
+						"type": "string",
+						"defaultValue": "myqueue"
+					},
+					"failureFlag": {
+						"type": "string",
+						"defaultValue": "true"
+					}
+				},
+				"variables": {
+					"response": {
+						"type": "String"
+					},
+					"error": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-03-17T12:49:21Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/credentials/credential1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlTable1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase2",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": {
+						"value": "@dataset().table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/DelimitedText1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "Data",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"Directory": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "FileServerLocation",
+						"folderPath": {
+							"value": "@dataset().Directory",
+							"type": "Expression"
+						}
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/Data')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RS_ETL_Source')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RS_ETL_Source1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RS_ETL_Target')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/RS_ETL_Target1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"SchemaName": {
+						"type": "string"
+					},
+					"TableName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().SchemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().TableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/contoso')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase2",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase2')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/contoso_temp')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"schema": {
+						"type": "string"
+					},
+					"table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/farid')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "farid",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobStorageLocation",
+						"fileName": "currencyexchange.csv",
+						"container": "farid"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "Date",
+						"type": "String"
+					},
+					{
+						"name": "FromCurrency",
+						"type": "String"
+					},
+					{
+						"name": "ToCurrency",
+						"type": "String"
+					},
+					{
+						"name": "Exchange",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/farid')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorage1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureBlobStorage1_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "integrationRuntime1",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/integrationRuntime1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureBlobStorage2')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('AzureBlobStorage2_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataExplorer1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDataExplorer",
+				"typeProperties": {
+					"endpoint": "[parameters('AzureDataExplorer1_properties_typeProperties_endpoint')]",
+					"database": "[parameters('AzureDataExplorer1_properties_typeProperties_database')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage3')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('AzureDataLakeStorage3_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('AzureDataLakeStorage3_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureDatabricks2')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureDatabricks",
+				"typeProperties": {
+					"domain": "https://adb-1028115474292650.10.azuredatabricks.net",
+					"authentication": "MSI",
+					"workspaceResourceId": "/subscriptions/fc8e1aad-9949-42ee-93fd-8e79d12716e5/resourceGroups/RG-Databricks-Test/providers/Microsoft.Databricks/workspaces/Edenbricks",
+					"newClusterNodeType": "Standard_DS3_v2",
+					"newClusterNumOfWorker": "1",
+					"newClusterSparkEnvVars": {
+						"": ""
+					},
+					"newClusterVersion": "11.1.x-scala2.12",
+					"newClusterDriverNodeType": "Standard_DS3_v2",
+					"clusterOption": "Fixed",
+					"newClusterInitScripts": []
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureKeyVault1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('AzureKeyVault1_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('AzureSqlDatabase1_properties_typeProperties_server')]",
+					"database": "[parameters('AzureSqlDatabase1_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SystemAssignedManagedIdentity"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/AzureSqlDatabase2')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('AzureSqlDatabase2_properties_typeProperties_server')]",
+					"database": "[parameters('AzureSqlDatabase2_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SystemAssignedManagedIdentity"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Data')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "FileServer",
+				"typeProperties": {
+					"host": "[parameters('Data_properties_typeProperties_host')]",
+					"userId": "[parameters('Data_properties_typeProperties_userId')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "AzureKeyVault1",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "Pass"
+					}
+				},
+				"connectVia": {
+					"referenceName": "onprem",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/onprem')]",
+				"[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/farid')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"serviceEndpoint": "[parameters('farid_properties_typeProperties_serviceEndpoint')]",
+					"accountKind": "StorageV2"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/showcase')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('showcase_properties_typeProperties_server')]",
+					"database": "[parameters('showcase_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SystemAssignedManagedIdentity"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dddddd')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 15,
+						"startTime": "2022-05-26T06:01:00Z",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger2')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [
+					{
+						"pipelineReference": {
+							"referenceName": "Pipeline_CopyViewToTable",
+							"type": "PipelineReference"
+						},
+						"parameters": {}
+					}
+				],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 15,
+						"startTime": "2022-05-21T12:25:00Z",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/pipelines/Pipeline_CopyViewToTable')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/trigger3')]",
+			"type": "Microsoft.DataFactory/factories/triggers",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"runtimeState": "Stopped",
+				"pipelines": [],
+				"type": "ScheduleTrigger",
+				"typeProperties": {
+					"recurrence": {
+						"frequency": "Minute",
+						"interval": 15,
+						"startTime": "2022-05-21T12:27:00Z",
+						"timeZone": "UTC"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/integrationRuntime1')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "General",
+							"coreCount": 8,
+							"timeToLive": 10,
+							"cleanup": false
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/onprem')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/credential1')]",
+			"type": "Microsoft.DataFactory/factories/credentials",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {
+					"resourceId": "/subscriptions/21ec9e4c-2010-47a0-8014-da19ee5608dd/resourcegroups/RG-ShowCase-Control-Prod/providers/Microsoft.ManagedIdentity/userAssignedIdentities/UAMI-ShowCase-Automation-Prod"
+				}
+			},
+			"dependsOn": []
+		}
+	]
+}
