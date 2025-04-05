@@ -1,0 +1,270 @@
+{
+	"name": "Wait for ADF Pipeline Run Completion",
+	"properties": {
+		"activities": [
+			{
+				"name": "Wait for Pipeline Run Completion",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "GetPipelineRunStateUrl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@variables('PipelineRunCompletedFlag')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Wait For Next Polling",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": {
+									"value": "@pipeline().parameters.PipelineRunStatusPollingIntervalInSeconds",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Initialize PipelineRunCompletedFlag",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "PipelineRunCompletedFlag",
+								"value": {
+									"value": "@bool(1)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "PipelineRunCompletedFlag",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Initialize PipelineRunCompletedFlag",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Get Pipeline Run Status",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "PipelineRunCompletedFlag",
+								"value": {
+									"value": "@contains(createArray('Succeeded','Failed','Cancelled'),activity('Get Pipeline Run Status').output.status)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Get Pipeline Run Status",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Wait For Next Polling",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.00:00:30",
+								"retry": 2,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"turnOffAsync": true,
+								"url": {
+									"value": "@variables('GetPipelineRunStateUrl')",
+									"type": "Expression"
+								},
+								"authentication": {
+									"type": "MSI",
+									"resource": {
+										"value": "@pipeline().parameters.ArmResourceId",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					],
+					"timeout": "0.05:00:00"
+				}
+			},
+			{
+				"name": "GetPipelineRunStateUrl",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "GetPipelineRunStateUrl",
+					"value": {
+						"value": "@concat(pipeline().parameters.AdfRestApiOrigin,'pipelineruns/',pipeline().parameters.PipelineRunId,pipeline().parameters.AdfRespApiFixedQueryParameters)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "If ADF Pipeline run failed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "PipelineRunFailedFlag",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@variables('PipelineRunFailedFlag')",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Propagate error",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": {
+									"value": "@concat('Requested Pipeline Run Status: ',activity('Get Pipeline Run Status').output.status,if(contains(activity('Get Pipeline Run Status').output,'cancelledBy'),concat('; Cancelled By: ',activity('Get Pipeline Run Status').output.cancelledBy),''),'; Error Message: ',activity('Get Pipeline Run Status').output.message)",
+									"type": "Expression"
+								},
+								"errorCode": "0"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "PipelineRunFailedFlag",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Wait for Pipeline Run Completion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PipelineRunFailedFlag",
+					"value": {
+						"value": "@contains(createArray('Failed','Cancelled'),activity('Get Pipeline Run Status').output.status)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Pipeline Return Value",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "PipelineRunFailedFlag",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "pipelineReturnValue",
+					"value": [
+						{
+							"key": "ReturnValueObject",
+							"value": {
+								"type": "Expression",
+								"content": "@activity('Get Pipeline Run Status').output.pipelineReturnValue"
+							}
+						},
+						{
+							"key": "PipelineRunFailedString",
+							"value": {
+								"type": "Expression",
+								"content": "@if(variables('PipelineRunFailedFlag'),'yes','no')"
+							}
+						}
+					],
+					"setSystemVariable": true
+				}
+			}
+		],
+		"parameters": {
+			"PipelineRunStatusPollingIntervalInSeconds": {
+				"type": "int"
+			},
+			"ArmResourceId": {
+				"type": "string"
+			},
+			"AdfRespApiFixedQueryParameters": {
+				"type": "string"
+			},
+			"PipelineRunId": {
+				"type": "string"
+			},
+			"AdfRestApiOrigin": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"GetPipelineRunStateUrl": {
+				"type": "String"
+			},
+			"PipelineRunCompletedFlag": {
+				"type": "Boolean",
+				"defaultValue": false
+			},
+			"PipelineRunFailedFlag": {
+				"type": "Boolean"
+			}
+		},
+		"folder": {
+			"name": "Execute ADF Pipeline"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-21T07:43:51Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

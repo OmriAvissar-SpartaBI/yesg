@@ -1,0 +1,134 @@
+{
+	"name": "ADF Pipelines Runs Asynced Example",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Pipelines Details to run",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:05:00",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "select *\nfrom\n(\nVALUES\n(\n 'a'\n,'fc8e1aad-9949-42ee-93fd-8e79d12716e5'\n,'RG-DataFactory-Test'\n,'{\"FailureFlag\":true,\"NumOfSeconds\":10}'\n,'DataFactory-Farid'\n,'pipeline11'\n),\n(\n 'b'\n,'fc8e1aad-9949-42ee-93fd-8e79d12716e5'\n,'RG-DataFactory-Test'\n,null\n,'DataFactory-Farid'\n,'pipeline2'\n)\n)\nas AdfPipelinesToRun\n(\n [PipelineWithParametersKey]\n,[AdfSubscriptionId]\n,[AdfResourceGroupName]\n,[PipelineParametersObject]\n,[AdfResourceName]\n,[AdfPipelineName]\n)"
+						}
+					],
+					"scriptBlockExecutionTimeout": "02:00:00"
+				}
+			},
+			{
+				"name": "Execute each Pipeline",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get Pipelines Details to run",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@if(equals(activity('Get Pipelines Details to run').output.resultSetCount,0),variables('EmptyArray'),activity('Get Pipelines Details to run').output.resultSets[0].rows)",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Execute ADF Pipeline",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Execute ADF Pipeline",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"AdfSubscriptionId": {
+										"value": "@item().AdfSubscriptionId",
+										"type": "Expression"
+									},
+									"AdfResourceGroupName": {
+										"value": "@item().AdfResourceGroupName",
+										"type": "Expression"
+									},
+									"PipelineRunStatusPollingIntervalInSeconds": 10,
+									"PipelineParametersObject": {
+										"value": "@json(coalesce(item().PipelineParametersObject,''))",
+										"type": "Expression"
+									},
+									"AdfResourceName": {
+										"value": "@item().AdfResourceName",
+										"type": "Expression"
+									},
+									"AdfPipelineName": {
+										"value": "@item().AdfPipelineName",
+										"type": "Expression"
+									},
+									"WaitForCompletionFlag": false
+								}
+							}
+						},
+						{
+							"name": "PipelineRunExecutionLog",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Execute ADF Pipeline",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "PipelineRunExecutionLog",
+								"value": {
+									"value": "@concat('PipelineWithParametersKey: ',string(item().PipelineWithParametersKey),'; PipelineRunId: ',if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'PipelineRunId'),activity('Execute ADF Pipeline').output.pipelineReturnValue.PipelineRunId,''))",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"variables": {
+			"PipelineRunExecutionLog": {
+				"type": "String"
+			},
+			"EmptyArray": {
+				"type": "Array",
+				"defaultValue": []
+			}
+		},
+		"folder": {
+			"name": "Execute ADF Pipeline"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-21T07:39:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,271 @@
+{
+	"name": "Execute ADF Pipeline",
+	"properties": {
+		"activities": [
+			{
+				"name": "Trigger ADF Pipeline Run",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "AdfRestApiOrigin",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:00:30",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"disableCertValidation": false,
+					"turnOffAsync": true,
+					"url": {
+						"value": "@concat(variables('AdfRestApiOrigin'),'pipelines/',pipeline().parameters.AdfPipelineName,'/createRun',variables('AdfRespApiFixedQueryParameters'))",
+						"type": "Expression"
+					},
+					"body": {
+						"value": "@string(pipeline().parameters.PipelineParametersObject)",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": {
+							"value": "@variables('ArmResourceId')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "AdfRestApiOrigin",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "AdfRestApiOrigin",
+					"value": {
+						"value": "@concat('https://management.azure.com/subscriptions/',pipeline().parameters.AdfSubscriptionId,'/resourceGroups/',pipeline().parameters.AdfResourceGroupName,'/providers/Microsoft.DataFactory/factories/',pipeline().parameters.AdfResourceName,'/')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "If should wait for ADF Pipeline run completion",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Trigger ADF Pipeline Run",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@pipeline().parameters.WaitForCompletionFlag",
+						"type": "Expression"
+					},
+					"ifFalseActivities": [
+						{
+							"name": "Pipeline Return Value without wait",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "pipelineReturnValue",
+								"value": [
+									{
+										"key": "ReturnValueObject",
+										"value": {
+											"type": "Null"
+										}
+									},
+									{
+										"key": "PipelineRunId",
+										"value": {
+											"type": "Expression",
+											"content": "@activity('Trigger ADF Pipeline Run').output.runId"
+										}
+									},
+									{
+										"key": "PipelineRunFailedString",
+										"value": {
+											"type": "Null"
+										}
+									}
+								],
+								"setSystemVariable": true
+							}
+						}
+					],
+					"ifTrueActivities": [
+						{
+							"name": "Wait for ADF Pipeline Run Completion",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Wait for ADF Pipeline Run Completion",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"PipelineRunStatusPollingIntervalInSeconds": {
+										"value": "@pipeline().parameters.PipelineRunStatusPollingIntervalInSeconds",
+										"type": "Expression"
+									},
+									"ArmResourceId": {
+										"value": "@variables('ArmResourceId')",
+										"type": "Expression"
+									},
+									"AdfRespApiFixedQueryParameters": {
+										"value": "@variables('AdfRespApiFixedQueryParameters')",
+										"type": "Expression"
+									},
+									"PipelineRunId": {
+										"value": "@activity('Trigger ADF Pipeline Run').output.runId",
+										"type": "Expression"
+									},
+									"AdfRestApiOrigin": {
+										"value": "@variables('AdfRestApiOrigin')",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "Pipeline Return Value with wait",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Wait for ADF Pipeline Run Completion",
+									"dependencyConditions": [
+										"Completed"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "pipelineReturnValue",
+								"value": [
+									{
+										"key": "ReturnValueObject",
+										"value": {
+											"type": "Expression",
+											"content": "@if(contains(activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue,'ReturnValueObject'),activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue.ReturnValueObject,null)"
+										}
+									},
+									{
+										"key": "PipelineRunId",
+										"value": {
+											"type": "Expression",
+											"content": "@activity('Trigger ADF Pipeline Run').output.runId"
+										}
+									},
+									{
+										"key": "PipelineRunFailedString",
+										"value": {
+											"type": "Expression",
+											"content": "@if(contains(activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue,'PipelineRunFailedString'),activity('Wait for ADF Pipeline Run Completion').output.pipelineReturnValue.PipelineRunFailedString,null)"
+										}
+									}
+								],
+								"setSystemVariable": true
+							}
+						},
+						{
+							"name": "Propagate error",
+							"type": "Fail",
+							"dependsOn": [
+								{
+									"activity": "Wait for ADF Pipeline Run Completion",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"message": {
+									"value": "@if(equals(activity('Wait for ADF Pipeline Run Completion').Error.message,''),'No Error Message',activity('Wait for ADF Pipeline Run Completion').Error.message)",
+									"type": "Expression"
+								},
+								"errorCode": "0"
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"AdfSubscriptionId": {
+				"type": "string"
+			},
+			"AdfResourceGroupName": {
+				"type": "string"
+			},
+			"PipelineRunStatusPollingIntervalInSeconds": {
+				"type": "int",
+				"defaultValue": 30
+			},
+			"PipelineParametersObject": {
+				"type": "object"
+			},
+			"AdfResourceName": {
+				"type": "string"
+			},
+			"AdfPipelineName": {
+				"type": "string"
+			},
+			"WaitForCompletionFlag": {
+				"type": "bool",
+				"defaultValue": true
+			}
+		},
+		"variables": {
+			"AdfRestApiOrigin": {
+				"type": "String"
+			},
+			"PipelineRunId": {
+				"type": "String"
+			},
+			"ArmResourceId": {
+				"type": "String",
+				"defaultValue": "https://management.core.windows.net"
+			},
+			"AdfRespApiFixedQueryParameters": {
+				"type": "String",
+				"defaultValue": "?api-version=2018-06-01"
+			}
+		},
+		"folder": {
+			"name": "Execute ADF Pipeline"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-21T07:43:51Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

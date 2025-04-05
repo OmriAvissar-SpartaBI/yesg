@@ -1,0 +1,120 @@
+{
+	"name": "ADF Pipeline Run Synced Example",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute ADF Pipeline",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Execute ADF Pipeline",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"AdfSubscriptionId": "fc8e1aad-9949-42ee-93fd-8e79d12716e5",
+						"AdfResourceGroupName": "RG-DataFactory-Test",
+						"PipelineRunStatusPollingIntervalInSeconds": 10,
+						"PipelineParametersObject": "{\"FailureFlag\":false,\"NumOfSeconds\":10}",
+						"AdfResourceName": "DataFactory-Farid",
+						"AdfPipelineName": "pipeline1"
+					}
+				}
+			},
+			{
+				"name": "ReturnValueString",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Execute ADF Pipeline",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ReturnValueString",
+					"value": {
+						"value": "@if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'ReturnValueObject'),string(activity('Execute ADF Pipeline').output.pipelineReturnValue.ReturnValueObject),null)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "PipelineRunId",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Execute ADF Pipeline",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PipelineRunId",
+					"value": {
+						"value": "@if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'PipelineRunId'),activity('Execute ADF Pipeline').output.pipelineReturnValue.PipelineRunId,null)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "PipelineRunFailedString",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Execute ADF Pipeline",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PipelineRunFailedString",
+					"value": {
+						"value": "@if(contains(activity('Execute ADF Pipeline').output.pipelineReturnValue,'PipelineRunFailedString'),activity('Execute ADF Pipeline').output.pipelineReturnValue.PipelineRunFailedString,null)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"ReturnValueString": {
+				"type": "String"
+			},
+			"PipelineRunId": {
+				"type": "String"
+			},
+			"PipelineRunFailedString": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Execute ADF Pipeline"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-21T07:39:43Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

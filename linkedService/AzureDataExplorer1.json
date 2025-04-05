@@ -1,0 +1,12 @@
+{
+	"name": "AzureDataExplorer1",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDataExplorer",
+		"typeProperties": {
+			"endpoint": "https://edencluster.westeurope.kusto.windows.net",
+			"database": "EdenBase"
+		}
+	}
+}

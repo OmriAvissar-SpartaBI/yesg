@@ -1,0 +1,118 @@
+{
+	"name": "serviceBus",
+	"properties": {
+		"activities": [
+			{
+				"name": "WebHook1",
+				"type": "WebHook",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@concat('https://',pipeline().parameters.serviceBusNamespaceName,'.servicebus.windows.net/',pipeline().parameters.queueName,'/messages')",
+						"type": "Expression"
+					},
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json",
+						"CustomPoperty": "aaaaa",
+						"BrokerProperties": {
+							"value": "@concat('{\"MessageId\":\"',guid(),'\",\"Label\":\"',pipeline().Pipeline,'\",\"CorrelationId\":\"',pipeline().RunId,'\"}')",
+							"type": "Expression"
+						}
+					},
+					"body": {
+						"value": "@json(concat('{\"data\":{\"failureFlag\":',pipeline().parameters.failureFlag,'}}'))",
+						"type": "Expression"
+					},
+					"timeout": "01:00:00",
+					"reportStatusOnCallBack": true,
+					"authentication": {
+						"resource": "https://servicebus.azure.net",
+						"credential": {
+							"referenceName": "credential1",
+							"type": "CredentialReference"
+						}
+					}
+				}
+			},
+			{
+				"name": "Set variable1",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "WebHook1",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "response",
+					"value": {
+						"value": "@string(activity('WebHook1').output)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set variable1_copy1",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "WebHook1",
+						"dependencyConditions": [
+							"Failed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "error",
+					"value": {
+						"value": "@string(activity('WebHook1').error)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"serviceBusNamespaceName": {
+				"type": "string",
+				"defaultValue": "serviservi"
+			},
+			"queueName": {
+				"type": "string",
+				"defaultValue": "myqueue"
+			},
+			"failureFlag": {
+				"type": "string",
+				"defaultValue": "true"
+			}
+		},
+		"variables": {
+			"response": {
+				"type": "String"
+			},
+			"error": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2025-03-17T12:49:21Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

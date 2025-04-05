@@ -1,0 +1,62 @@
+{
+	"name": "Databricks Workflow Example",
+	"properties": {
+		"activities": [
+			{
+				"name": "Execute Databricks Job",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "Execute Databricks Job",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"DatabricksNotebookParametersObject": "{\"notebookInput_1\":\"bbbbb\"}",
+						"DatabricksSqlParametersObject": "{\"tableName\":\"dim2\"}"
+					}
+				}
+			},
+			{
+				"name": "JobRunGuiUrl",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Execute Databricks Job",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "JobRunGuiUrl",
+					"value": {
+						"value": "@if(contains(activity('Execute Databricks Job').output.pipelineReturnValue,'JobRunGuiUrl'),activity('Execute Databricks Job').output.pipelineReturnValue.JobRunGuiUrl,null)",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"JobRunGuiUrl": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "Execute Databricks Job"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-20T12:22:18Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

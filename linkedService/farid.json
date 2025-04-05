@@ -1,0 +1,12 @@
+{
+	"name": "farid",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobStorage",
+		"typeProperties": {
+			"serviceEndpoint": "https://faridtherabbit.blob.core.windows.net/",
+			"accountKind": "StorageV2"
+		}
+	}
+}

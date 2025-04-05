@@ -1,0 +1,26 @@
+{
+	"name": "DataFactory-Farid",
+	"properties": {
+		"globalParameters": {
+			"DogName": {
+				"type": "string",
+				"value": "Polly"
+			}
+		},
+		"globalConfigurations": {
+			"PolicyValidationEnabled": "false"
+		}
+	},
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned,UserAssigned",
+		"principalId": "f1b96abd-bcef-4a4f-819a-9de5b4e87239",
+		"tenantId": "464edfaa-792d-4ff8-84f0-94290a8360ae",
+		"userAssignedIdentities": {
+			"/subscriptions/fc8e1aad-9949-42ee-93fd-8e79d12716e5/resourcegroups/RG-Databricks-Test/providers/Microsoft.ManagedIdentity/userAssignedIdentities/UAMI-Eden": {
+				"clientId": "cf9254bb-d230-4395-bfa7-f549addcf406",
+				"principalId": "328df16b-c7c2-4363-93f7-7a9b986e31fc"
+			}
+		}
+	}
+}

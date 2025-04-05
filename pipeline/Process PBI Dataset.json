@@ -1,0 +1,259 @@
+{
+	"name": "Process PBI Dataset",
+	"properties": {
+		"activities": [
+			{
+				"name": "Process PBI Dataset",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Set PbiDatasetId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:30:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": {
+						"value": "@concat('https://api.powerbi.com/v1.0/myorg/groups/',variables('PbiWorkspaceId'),'/datasets/',variables('PbiDatasetId'),'/refreshes')",
+						"type": "Expression"
+					},
+					"body": {
+						"value": "@concat('{\"notifyOption\":\"NoNotification\",\"maxParallelism\":30,\"type\":\"Full\",\"retryCount\":',pipeline().parameters.RetryCount,',\"objects\":',pipeline().parameters.ObjectToProcess,'}')",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": {
+							"value": "@variables('PbiServiceAadRerourceId')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "If PBI Dataset Process Failed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Process PBI Dataset",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals('Completed',activity('Process PBI Dataset').output.status))",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Fail Pipeline",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": {
+									"value": "@string(if(contains(activity('Process PBI Dataset').output,'messages'),activity('Process PBI Dataset').output.messages,activity('Process PBI Dataset').output))",
+									"type": "Expression"
+								},
+								"errorCode": {
+									"value": "'PbiServiceRefreshFailure'",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Get PBI Workspace Details",
+				"type": "WebActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:01:30",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"turnOffAsync": true,
+					"url": {
+						"value": "@concat('https://api.powerbi.com/v1.0/myorg/groups?$filter=',encodeUriComponent(concat('tolower(name) eq ''',toLower(pipeline().parameters.PbiWorkspaceName),'''')))",
+						"type": "Expression"
+					},
+					"body": {
+						"notifyOption": "NoNotification",
+						"maxParallelism": 30,
+						"retryCount": 2,
+						"type": "Full"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": {
+							"value": "@variables('PbiServiceAadRerourceId')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Get All PBI Datasets Details",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "Set PbiWorkspaceId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:01:30",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "GET",
+					"turnOffAsync": true,
+					"url": {
+						"value": "@concat('https://api.powerbi.com/v1.0/myorg/groups/',variables('PbiWorkspaceId'),'/datasets')",
+						"type": "Expression"
+					},
+					"body": {
+						"notifyOption": "NoNotification",
+						"maxParallelism": 30,
+						"retryCount": 2,
+						"type": "Full"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": {
+							"value": "@variables('PbiServiceAadRerourceId')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "Set PbiWorkspaceId",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get PBI Workspace Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PbiWorkspaceId",
+					"value": {
+						"value": "@activity('Get PBI Workspace Details').output.value[0].id",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Filter Requested PBI Dataset Details",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Get All PBI Datasets Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get All PBI Datasets Details').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@equals(toLower(item().name),toLower(pipeline().parameters.PbiDatasetName))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set PbiDatasetId",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Filter Requested PBI Dataset Details",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "PbiDatasetId",
+					"value": {
+						"value": "@activity('Filter Requested PBI Dataset Details').output.value[0].id",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"PbiWorkspaceName": {
+				"type": "string"
+			},
+			"PbiDatasetName": {
+				"type": "string"
+			},
+			"RetryCount": {
+				"type": "string",
+				"defaultValue": "1"
+			},
+			"ObjectToProcess": {
+				"type": "string",
+				"defaultValue": []
+			}
+		},
+		"variables": {
+			"PbiWorkspaceId": {
+				"type": "String"
+			},
+			"PbiDatasetId": {
+				"type": "String"
+			},
+			"PbiServiceAadRerourceId": {
+				"type": "String",
+				"defaultValue": "https://analysis.windows.net/powerbi/api"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-03-19T08:14:39Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,41 @@
+{
+	"name": "farid",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "farid",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobStorageLocation",
+				"fileName": "currencyexchange.csv",
+				"container": "farid"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "Date",
+				"type": "String"
+			},
+			{
+				"name": "FromCurrency",
+				"type": "String"
+			},
+			{
+				"name": "ToCurrency",
+				"type": "String"
+			},
+			{
+				"name": "Exchange",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

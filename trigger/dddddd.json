@@ -1,0 +1,17 @@
+{
+	"name": "dddddd",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 15,
+				"startTime": "2022-05-26T06:01:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}

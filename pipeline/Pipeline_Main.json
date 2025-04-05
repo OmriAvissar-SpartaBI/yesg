@@ -1,0 +1,92 @@
+{
+	"name": "Pipeline_Main",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get PowerBI View Names",
+				"type": "Script",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:01:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"linkedServiceName": {
+					"referenceName": "AzureSqlDatabase1",
+					"type": "LinkedServiceReference"
+				},
+				"typeProperties": {
+					"scripts": [
+						{
+							"type": "Query",
+							"text": "select\n [SchemaName] = schema_name(v.schema_id)\n,[ViewName] = v.name\n,[TableName] = substring(v.name,4,len(v.name)-3)\nfrom sys.views v\nwhere schema_name(v.schema_id) = 'powerbi'"
+						}
+					]
+				}
+			},
+			{
+				"name": "Copy all PowerBI Views To Tables",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Get PowerBI View Names",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Get PowerBI View Names').output.resultSets[0].rows",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 5,
+					"activities": [
+						{
+							"name": "Execute Pipeline_CopyViewToTable",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "Pipeline_CopyViewToTable",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"Source_SchemaName": {
+										"value": "@item().SchemaName",
+										"type": "Expression"
+									},
+									"Source_ViewName": {
+										"value": "@item().ViewName",
+										"type": "Expression"
+									},
+									"Target_SchemaName": {
+										"value": "@item().SchemaName",
+										"type": "Expression"
+									},
+									"Taget_TableName": {
+										"value": "@item().TableName",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2022-05-24T11:03:25Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

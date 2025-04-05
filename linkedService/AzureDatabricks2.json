@@ -1,0 +1,22 @@
+{
+	"name": "AzureDatabricks2",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "AzureDatabricks",
+		"typeProperties": {
+			"domain": "https://adb-1028115474292650.10.azuredatabricks.net",
+			"authentication": "MSI",
+			"workspaceResourceId": "/subscriptions/fc8e1aad-9949-42ee-93fd-8e79d12716e5/resourceGroups/RG-Databricks-Test/providers/Microsoft.Databricks/workspaces/Edenbricks",
+			"newClusterNodeType": "Standard_DS3_v2",
+			"newClusterNumOfWorker": "1",
+			"newClusterSparkEnvVars": {
+				"": ""
+			},
+			"newClusterVersion": "11.1.x-scala2.12",
+			"newClusterInitScripts": [],
+			"newClusterDriverNodeType": "Standard_DS3_v2",
+			"clusterOption": "Fixed"
+		}
+	}
+}

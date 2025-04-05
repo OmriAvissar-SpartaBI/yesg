@@ -1,0 +1,369 @@
+{
+	"name": "Execute Databricks Job",
+	"properties": {
+		"activities": [
+			{
+				"name": "Trigger Databricks Job Run",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "DatabricksRestApiOrigin",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:00:30",
+					"retry": 2,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"disableCertValidation": false,
+					"turnOffAsync": true,
+					"url": {
+						"value": "@concat(variables('DatabricksRestApiOrigin'),'run-now')",
+						"type": "Expression"
+					},
+					"body": {
+						"value": "@concat('{\"job_id\":',pipeline().parameters.JobId,',\"notebook_params\":',string(pipeline().parameters.DatabricksNotebookParametersObject),',\"sql_params\":',string(pipeline().parameters.DatabricksSqlParametersObject),'}')",
+						"type": "Expression"
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": {
+							"value": "@variables('AzureDatabricksResourceId')",
+							"type": "Expression"
+						}
+					}
+				}
+			},
+			{
+				"name": "DatabricksRestApiOrigin",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "DatabricksSiteOrigin",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "DatabricksRestApiOrigin",
+					"value": {
+						"value": "@concat(variables('DatabricksSiteOrigin'),'api/2.1/jobs/')",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "JobRunId",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Trigger Databricks Job Run",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "JobRunId",
+					"value": {
+						"value": "@string(activity('Trigger Databricks Job Run').output.run_id)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Wait for Job Run Completion",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "GetJobRunStateUrl",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@variables('JobRunCompletedFlag')",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "Wait For Next Polling",
+							"type": "Wait",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": {
+									"value": "@pipeline().parameters.JobRunStatusPollingIntervalInSeconds",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Get Job Run Status",
+							"type": "WebActivity",
+							"dependsOn": [
+								{
+									"activity": "Wait For Next Polling",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.00:00:30",
+								"retry": 2,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"method": "GET",
+								"disableCertValidation": false,
+								"turnOffAsync": true,
+								"url": {
+									"value": "@variables('GetJobRunStateUrl')",
+									"type": "Expression"
+								},
+								"body": {
+									"value": "@concat('{\"job_id\":',pipeline().parameters.JobId,'}')",
+									"type": "Expression"
+								},
+								"authentication": {
+									"type": "MSI",
+									"resource": {
+										"value": "@variables('AzureDatabricksResourceId')",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "Initialize JobRunCompletedFlag",
+							"type": "SetVariable",
+							"dependsOn": [],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "JobRunCompletedFlag",
+								"value": {
+									"value": "@bool(1)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "JobRunCompletedFlag",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Initialize JobRunCompletedFlag",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Get Job Run Status",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "JobRunCompletedFlag",
+								"value": {
+									"value": "@not(\n    or(\n        equals(activity('Get Job Run Status').output.state.life_cycle_state,'PENDING'),\n        equals(activity('Get Job Run Status').output.state.life_cycle_state,'RUNNING')\n    )\n)",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"timeout": "0.05:00:00"
+				}
+			},
+			{
+				"name": "GetJobRunStateUrl",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "JobRunId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "GetJobRunStateUrl",
+					"value": {
+						"value": "@concat(variables('DatabricksRestApiOrigin'),'runs/get?run_id=',variables('JobRunId'))",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "If Databricks job run failed",
+				"type": "IfCondition",
+				"dependsOn": [
+					{
+						"activity": "Wait for Job Run Completion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(and(contains(activity('Get Job Run Status').output.state,'result_state'),equals(activity('Get Job Run Status').output.state.result_state,'SUCCESS')))",
+						"type": "Expression"
+					},
+					"ifTrueActivities": [
+						{
+							"name": "Propagate Databricks error",
+							"type": "Fail",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"message": {
+									"value": "@activity('Get Job Run Status').output.state.state_message",
+									"type": "Expression"
+								},
+								"errorCode": "0"
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "JobRunGuiUrl",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "JobRunId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "pipelineReturnValue",
+					"value": [
+						{
+							"key": "JobRunGuiUrl",
+							"value": {
+								"type": "Expression",
+								"content": "@concat(variables('DatabricksSiteOrigin'),'#job/',pipeline().parameters.JobId,'/run/',variables('JobRunId'))"
+							}
+						}
+					],
+					"setSystemVariable": true
+				}
+			},
+			{
+				"name": "DatabricksSiteOrigin",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "DatabricksSiteOrigin",
+					"value": {
+						"value": "@concat('https://',pipeline().parameters.WorkspaceId,'.azuredatabricks.net/')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"WorkspaceId": {
+				"type": "string",
+				"defaultValue": "adb-1028115474292650.10"
+			},
+			"JobId": {
+				"type": "string",
+				"defaultValue": "105564653978371"
+			},
+			"JobRunStatusPollingIntervalInSeconds": {
+				"type": "int",
+				"defaultValue": 30
+			},
+			"DatabricksNotebookParametersObject": {
+				"type": "object"
+			},
+			"DatabricksSqlParametersObject": {
+				"type": "object"
+			}
+		},
+		"variables": {
+			"DatabricksRestApiOrigin": {
+				"type": "String"
+			},
+			"JobRunId": {
+				"type": "String"
+			},
+			"GetJobRunStateUrl": {
+				"type": "String"
+			},
+			"AzureDatabricksResourceId": {
+				"type": "String",
+				"defaultValue": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d"
+			},
+			"DatabricksSiteOrigin": {
+				"type": "String"
+			},
+			"JobRunCompletedFlag": {
+				"type": "Boolean",
+				"defaultValue": false
+			}
+		},
+		"folder": {
+			"name": "Execute Databricks Job"
+		},
+		"annotations": [],
+		"lastPublishTime": "2023-05-20T12:22:18Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
